@@ -76,7 +76,7 @@ stages:
             inputs:
               action: 'deploy'
               connectionType: 'kubernetesServiceConnection'
-              kubernetesServiceConnection: 'azure-pipelines-canary-k8s'
+              kubernetesServiceConnection: 'myapp-default'
               manifests: |
                 $(Pipeline.Workspace)/manifests/deployment.yml
                 $(Pipeline.Workspace)/manifests/service.yml
@@ -99,9 +99,12 @@ stages:
           - task: Kubernetes@1
             displayName: 'Create a new namespace for the pull request'
             inputs:
-              command: apply
+              connectionType: 'Kubernetes Service Connection'
+              kubernetesServiceEndpoint: 'myapp-default'
+              command: 'apply'
               useConfigurationFile: true
-              inline: '{ "kind": "Namespace", "apiVersion": "v1", "metadata": { "name": "$(k8sNamespaceForPR)" }}'
+              secretType: 'dockerRegistry'
+              containerRegistryType: 'Azure Container Registry'
 
           - task: KubernetesManifest@1
             displayName: Create imagePullSecret
@@ -119,7 +122,7 @@ stages:
             inputs:
               action: 'deploy'
               connectionType: 'kubernetesServiceConnection'
-              kubernetesServiceConnection: 'azure-pipelines-canary-k8s'
+              kubernetesServiceConnection: 'myapp-default'
               namespace: '$(k8sNamespaceForPR)'
               manifests: |
                 $(Pipeline.Workspace)/manifests/deployment.yml
@@ -133,7 +136,7 @@ stages:
             continueOnError: true
             inputs:
               connectionType: 'Kubernetes Service Connection'
-              kubernetesServiceEndpoint: 'azure-pipelines-canary-k8s'
+              kubernetesServiceEndpoint: 'myapp-default'
               namespace: '$(k8sNamespaceForPR)'
               command: 'get'
               arguments: 'svc'
